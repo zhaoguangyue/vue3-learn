@@ -1,3 +1,4 @@
+var Vue =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -81,44 +82,43 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./index.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./index.js":
-/*!******************!*\
-  !*** ./index.js ***!
-  \******************/
-/*! no exports provided */
+/***/ "./src/reactive.js":
+/*!*************************!*\
+  !*** ./src/reactive.js ***!
+  \*************************/
+/*! exports provided: effect, reactive */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _src__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./src */ \"./src/index.js\");\n\nconsole.log(_src__WEBPACK_IMPORTED_MODULE_0__[\"vue\"])\nconsole.log(_src__WEBPACK_IMPORTED_MODULE_0__[\"createApp\"])\nwindow.vue = _src__WEBPACK_IMPORTED_MODULE_0__[\"vue\"]\n\nfunction aa(){\n    console.log(123)\n    var a = new Promise((resolve)=>{\n        console.log('aapromise')\n        resolve()\n    })\n    a.then(()=>{\n        console.log('aa的then')\n    })\n}\nfunction bb(){\n    console.log(12222)\n\n    var a = new Promise((resolve)=>{\n        console.log('bbpromise')\n        resolve()\n    })\n    a.then(()=>{\n        console.log('bb的then')\n    })\n}\n\naa()\nbb()\n\n//# sourceURL=webpack:///./index.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"effect\", function() { return effect; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"reactive\", function() { return reactive; });\n/* harmony import */ var _reactivity_effect_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reactivity/effect.js */ \"./src/reactivity/effect.js\");\n\n\nconst reactive = (target)=>{\n    const observed = new Proxy(target, baseHandler)\n    return observed\n}\n\n\nlet baseHandler = {\n    get: createdGetter(),\n    set: createSetter()\n}\n\nfunction createdGetter(){\n    return function get(target, key, receiver){\n        const res = Reflect.get(target, key);\n        // 如果是计算属性，计算属性返回的是一个对象\n        if(res.__v_isRef){\n            return res.value\n        }\n        Object(_reactivity_effect_js__WEBPACK_IMPORTED_MODULE_0__[\"listen\"])(target, key, activeEffect)\n        return isObject(target) ? reactive(res) : value\n    }\n}\n\nfunction createSetter(){\n    return function set(target, key, value, receiver){\n        const oldValue = Reflect.get(target, key);\n        let result = Reflect.set(target, key, value, receiver)\n        Object(_reactivity_effect_js__WEBPACK_IMPORTED_MODULE_0__[\"trigger\"])(target, key)\n        return result\n    }\n}\n\nlet activeEffect\nfunction effect (fn, option = {}){\n    let effect = createReactiveEffect(fn);\n    // 一共有三处使用effect： mount，watch，computed\n    // watch 和 computed的lazy为true\n    if(!option.lazy){\n        effect();\n    }\n    return effect\n}\n\n// let effectStack = []\nfunction createReactiveEffect(fn){\n    let effect = function reactiveEffect(){\n        // if (!effectStack.includes(effect))\n        try{\n            // effectStack.push(effect)\n            activeEffect = effect\n            fn()\n        } finally {\n            // activeEffect = null\n            // effectStack.pop(effect)\n            // activeEffect = effectStack[effectStack.length-1]\n        }\n    } \n    effect.deps = [];\n    effect.raw = fn;\n    return effect\n}\n\nlet isObject = (v)=>{\n    typeof v === 'object'\n}\n\n\n\n\n//# sourceURL=webpack://Vue/./src/reactive.js?");
 
 /***/ }),
 
-/***/ "./src/index.js":
-/*!**********************!*\
-  !*** ./src/index.js ***!
-  \**********************/
-/*! exports provided: vue, createApp */
+/***/ "./src/reactivity/effect.js":
+/*!**********************************!*\
+  !*** ./src/reactivity/effect.js ***!
+  \**********************************/
+/*! exports provided: listen, trigger */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"vue\", function() { return vue; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"createApp\", function() { return createApp; });\n/* harmony import */ var _runtime_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./runtime-core */ \"./src/runtime-core.js\");\nconst vue = {\n\n}\n\nconst createApp = (...args)=>{\n    let app = Object(_runtime_core__WEBPACK_IMPORTED_MODULE_1__[\"getApp\"])();\n    app.mount()\n    return app\n}\n\n//# sourceURL=webpack:///./src/index.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"listen\", function() { return listen; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"trigger\", function() { return trigger; });\n\n\nfunction effect(fn, options){\n    const effect = createReactiveEffect(fn, options);\n    if(!options.lazy){\n        effect();\n    }\n    return effect\n}\n\nlet effectStack = []\nfunction createReactiveEffect(fn, options){\n    let effect = function reactiveEffect(){\n        \n        fn();\n    }\n    effect.computed = false,\n    effect.deps = [];\n    effect.raw = fn\n    effect.options = options;\n}\n\n\n\n\n// 发布订阅\nlet targetMap = new WeakMap();\nfunction listen(target, key, fn){\n    let depsMap = targetMap.get(target);\n    if (!depsMap){\n        depsMap = new Map();\n        targetMap.set(target, depsMap);\n    }\n    let deps = depsMap.get(key);\n    if(!deps) {\n        deps = new Set();\n        depsMap.set(key, deps);\n    }\n\n    if(!deps.has(fn)){\n        deps.add(fn)\n    }\n}\n\nfunction trigger(target, key){\n    let depsMap = targetMap.get(target);\n    if(!depsMap){\n        return \n    }\n    let deps = depsMap.get(key);\n    deps && deps.forEach(effect=>{\n        effect();\n    })\n}\n\n\n\n//# sourceURL=webpack://Vue/./src/reactivity/effect.js?");
 
 /***/ }),
 
-/***/ "./src/runtime-core.js":
-/*!*****************************!*\
-  !*** ./src/runtime-core.js ***!
-  \*****************************/
-/*! exports provided: getApp, createApp, createRenderer */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ 0:
+/*!*******************************!*\
+  !*** multi ./src/reactive.js ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"getApp\", function() { return getApp; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"createApp\", function() { return createApp; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"createRenderer\", function() { return createRenderer; });\nconst getApp = (rootComponent, props = mnull)=>{\n    return {\n        _component:rootComponent,\n        _props: props,\n        _container: null,\n        _context: context,\n        use: ()=>{\n            console.log('使用vue插件')\n        },\n        mixin: ()=>{\n            console.log('mixin')\n        },\n        component: ()=>{\n            console.log('component')\n        },\n        directive: ()=>{\n            console.log('directive')\n        },\n        mount: ()=>{\n            console.log('mount')\n        },\n        unmount: ()=>{\n            console.log('unmount')\n        },\n        provide: ()=>{\n            console.log('provide')\n        },\n\n    }\n}\n\nconst createApp = (...args) => {\n    const app = ensureRenderer().createApp(...args)\n  \n    const { mount } = app\n    app.mount = (containerOrSelector) => {\n        const container = normalizeContainer(containerOrSelector)\n        return mount(container)\n    }\n    return app\n}  \n\nfunction createRenderer(options) {\n  return baseCreateRenderer(options)\n}\n\n//# sourceURL=webpack:///./src/runtime-core.js?");
+eval("module.exports = __webpack_require__(/*! ./src/reactive.js */\"./src/reactive.js\");\n\n\n//# sourceURL=webpack://Vue/multi_./src/reactive.js?");
 
 /***/ })
 

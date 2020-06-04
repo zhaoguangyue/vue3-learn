@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="aa"></div>
+    <div id="bb"></div>
+    <button id="btn">按钮</button>
+    <!-- <script src="../../vue3-code-learn/packages/vue/dist/vue.global.js"></script> -->
+    <script src="../dist/bundle.js"></script>
+    <!-- <script src="./test.js"></script> -->
+    <!-- <script src="../src/reactive.js"></script> -->
+    
+    <script type="module">
+        console.log(Vue.effect)
+        const {effect, reactive} = Vue
+        var aa = document.getElementById('aa')
+        var bb = document.getElementById('bb')
+        var btn = document.getElementById('btn')
+        let state = reactive({
+            count:1
+        });
+        console.log(aa)
+        console.log(effect)
+        console.log(reactive)
+        // 添加订阅
+        effect(()=>{
+            console.log('effect执行')
+            bb.innerHTML = state.count
+        })
+        btn.onclick = function(){
+            ++state.count
+        }
+    </script>
+</body>
+</html>

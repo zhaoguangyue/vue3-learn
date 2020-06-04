@@ -2,10 +2,11 @@ const path = require('path');
 const webpack = require('webpack')
 module.exports = {
     mode: "development",
-    entry: "./index.js",
+    entry: ["./src/reactive.js"],
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist')
+        path: path.resolve(__dirname, 'dist'),
+        library: "Vue",
     },
     watch: true,
     module: {
