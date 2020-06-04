@@ -1,6 +1,6 @@
 
-
-function effect(fn, options){
+let activeEffect;
+function effect(fn, options = {computed: false}){
     const effect = createReactiveEffect(fn, options);
     if(!options.lazy){
         effect();
@@ -11,13 +11,21 @@ function effect(fn, options){
 let effectStack = []
 function createReactiveEffect(fn, options){
     let effect = function reactiveEffect(){
-        
-        fn();
+        if(!effectStack.includes(effect)){
+            try{
+                effectStack.push()
+                activeEffect = effect
+                return fn();
+            } finally {
+                effectStack.pop();
+                activeEffect = effectStack[effectStack.length - 1]
+            }
+        }
     }
-    effect.computed = false,
     effect.deps = [];
     effect.raw = fn
     effect.options = options;
+    return effect
 }
 
 
@@ -25,7 +33,7 @@ function createReactiveEffect(fn, options){
 
 // 发布订阅
 let targetMap = new WeakMap();
-function listen(target, key, fn){
+function listen(target, key){
     let depsMap = targetMap.get(target);
     if (!depsMap){
         depsMap = new Map();
@@ -37,8 +45,8 @@ function listen(target, key, fn){
         depsMap.set(key, deps);
     }
 
-    if(!deps.has(fn)){
-        deps.add(fn)
+    if(!deps.has(activeEffect)){
+        deps.add(activeEffect)
     }
 }
 
@@ -48,12 +56,31 @@ function trigger(target, key){
         return 
     }
     let deps = depsMap.get(key);
+    let computedRunners = [];
+    let effects = [];
+
     deps && deps.forEach(effect=>{
-        effect();
+        if (effect !== activeEffect) {
+            if (effect.options.computed) {
+                computedRunners.push(effect)
+            } else {
+                effects.push(effect)
+            }
+        }
     })
+    function run(effect){
+        if(effect.options.scheduler){
+            effect.options.scheduler()
+        } else {
+            effect();
+        }
+    }
+    computedRunners.forEach(run)
+    effects.forEach(run)
 }
 
 export {
+    effect,
     listen,
     trigger
 }

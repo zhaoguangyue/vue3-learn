@@ -24,12 +24,13 @@ export function computed(getterOrOption){
     // value 需要缓存
     let value;
     let dirty = true;
-
     const runner = effect(getter, {
         lazy: true, //创建一个effect，但是不立即执行
         computed: true, //标记该effect为计算属性的
         // 为该effect添加scheduler，在订阅发布器，进行发布的时候，就不会执行getter，而是执行scheduler函数
+        // 第一次获取该值后时，将该计算属性加入了订阅，所以之后有trigger时，肯定会走
         scheduler(){
+            // 第一次获取后为false，第二次获取该值才走这里
             if(!dirty){
                 dirty = true
                 trigger(computed, 'value')
@@ -42,9 +43,10 @@ export function computed(getterOrOption){
         // 计算属性 缓存需要实现
         get value(){
             // dirty为true，就重新计算value
-            if(dirty){
+            if (dirty) {
                 // 运行getter, 
                 value = runner()
+                // 在第一次获取计算属性的值后，dirty为false
                 dirty = false
             }
             // 订阅该计算属性

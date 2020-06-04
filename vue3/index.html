@@ -15,22 +15,27 @@
     <!-- <script src="../src/reactive.js"></script> -->
     
     <script type="module">
-        console.log(Vue.effect)
-        const {effect, reactive} = Vue
+        // console.log(Vue.effect)
+        const {effect, reactive, computed} = Vue
         var aa = document.getElementById('aa')
         var bb = document.getElementById('bb')
         var btn = document.getElementById('btn')
         let state = reactive({
             count:1
         });
-        console.log(aa)
-        console.log(effect)
-        console.log(reactive)
+        // console.log(aa)
+        // console.log(effect)
+        // console.log(reactive)
         // 添加订阅
+        let aaa = computed(()=>{
+            return state.count * 2
+        })
+        console.log(aaa)
         effect(()=>{
             console.log('effect执行')
-            bb.innerHTML = state.count
+            bb.innerHTML = state.count + '----------' + aaa
         })
+        
         btn.onclick = function(){
             ++state.count
         }
