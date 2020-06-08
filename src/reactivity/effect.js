@@ -13,7 +13,7 @@ function createReactiveEffect(fn, options){
     let effect = function reactiveEffect(){
         if(!effectStack.includes(effect)){
             try{
-                effectStack.push()
+                effectStack.push(effect)
                 activeEffect = effect
                 return fn();
             } finally {

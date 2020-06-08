@@ -11,6 +11,7 @@
  * })
  */
 import {effect, listen, trigger} from "./effect.js"
+
 export function computed(getterOrOption){
     let getter, setter;
     if(typeof getterOrOption === 'function'){

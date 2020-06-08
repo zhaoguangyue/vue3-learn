@@ -2,7 +2,7 @@ const path = require('path');
 const webpack = require('webpack')
 module.exports = {
     mode: "development",
-    entry: ["./src/reactive.js"],
+    entry: ["./src/reactivity/reactive.js"],
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist'),
